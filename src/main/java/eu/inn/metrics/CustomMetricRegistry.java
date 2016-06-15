@@ -67,34 +67,38 @@ public class CustomMetricRegistry extends MetricRegistry {
         throw new IllegalArgumentException(name + " is already used for a different type of metric");
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
 
     public static class Builder {
-        private MetricBuilder<Timer> timersBuilder = DefaultBuilder.TIMERS;
-        private MetricBuilder<Histogram> histogramsBuilder = DefaultBuilder.HISTOGRAMS;
-        private MetricBuilder<Meter> metersBuilder = DefaultBuilder.METERS;
-        private MetricBuilder<Counter> countersBuilder = DefaultBuilder.COUNTERS;
+        private MetricBuilder<Timer> timersBuilder = DefaultMetricBuilder.TIMERS;
+        private MetricBuilder<Histogram> histogramsBuilder = DefaultMetricBuilder.HISTOGRAMS;
+        private MetricBuilder<Meter> metersBuilder = DefaultMetricBuilder.METERS;
+        private MetricBuilder<Counter> countersBuilder = DefaultMetricBuilder.COUNTERS;
 
-        public Builder setTimersBuilder(MetricBuilder<Timer> timersBuilder) {
+        public Builder timersBuilder(MetricBuilder<Timer> timersBuilder) {
             this.timersBuilder = timersBuilder;
             return this;
         }
 
-        public Builder setHistogramsBuilder(MetricBuilder<Histogram> histogramsBuilder) {
+        public Builder histogramsBuilder(MetricBuilder<Histogram> histogramsBuilder) {
             this.histogramsBuilder = histogramsBuilder;
             return this;
         }
 
-        public Builder setMetersBuilder(MetricBuilder<Meter> metersBuilder) {
+        public Builder metersBuilder(MetricBuilder<Meter> metersBuilder) {
             this.metersBuilder = metersBuilder;
             return this;
         }
 
-        public Builder setCountersBuilder(MetricBuilder<Counter> countersBuilder) {
+        public Builder countersBuilder(MetricBuilder<Counter> countersBuilder) {
             this.countersBuilder = countersBuilder;
             return this;
         }
 
-        public CustomMetricRegistry create() {
+        public CustomMetricRegistry build() {
             return new CustomMetricRegistry(timersBuilder, histogramsBuilder, metersBuilder, countersBuilder);
         }
     }

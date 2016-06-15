@@ -2,12 +2,12 @@ package eu.inn.metrics;
 
 import com.codahale.metrics.*;
 
-public class DefaultBuilder {
+public class DefaultMetricBuilder {
 
     public static final MetricBuilder<Histogram> HISTOGRAMS = new MetricBuilder<Histogram>() {
         @Override
         public Histogram newMetric() {
-            return new Histogram(new LatencyReservoir());
+            return new Histogram(LatencyReservoir.builder().build());
         }
 
         @Override
@@ -20,7 +20,7 @@ public class DefaultBuilder {
     public static final MetricBuilder<Timer> TIMERS = new MetricBuilder<Timer>() {
         @Override
         public Timer newMetric() {
-            return new Timer(new LatencyReservoir());
+            return new Timer(LatencyReservoir.builder().build());
         }
 
         @Override
