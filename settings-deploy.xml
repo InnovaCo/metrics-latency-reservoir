@@ -1,0 +1,24 @@
+<settings>
+  <servers>
+    <server>
+      <id>ossrh</id>
+      <username>${env.sonatype_username}</username>
+      <password>${env.sonatype_password}</password>
+    </server>
+  </servers>
+  <profiles>
+   <profile>
+     <id>ossrh</id>
+     <activation>
+       <activeByDefault>true</activeByDefault>
+     </activation>
+     <properties>
+       <!--gpg.executable>gpg2</gpg.executable-->
+       <gpg.passphrase>${env.oss_gpg_passphrase}</gpg.passphrase>
+       <gpg.publicKeyring>./inn-oss-public.asc.gpg</gpg.publicKeyring>
+       <gpg.secretKeyring>./inn-oss-private.asc.gpg</gpg.secretKeyring>
+       <gpg.keyname>5DF2525FA9D102B7</gpg.keyname>
+     </properties>
+   </profile>
+ </profiles>
+</settings>
