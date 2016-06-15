@@ -1,6 +1,7 @@
 language: java
 jdk:
 - oraclejdk7
+install: true
 script: $TRAVIS_BUILD_DIR/travis/build.sh
 sudo: false
 addons:
