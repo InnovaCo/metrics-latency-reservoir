@@ -7,11 +7,16 @@
     <artifactId>metrics-latency-reservoir</artifactId>
     <packaging>jar</packaging>
 
-    <description>metrics-latency-reservoir</description>
-
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 
     <name>metrics-latency-reservoir</name>
+    <description>metrics-latency-reservoir</description>
+    <url>https://github.com/InnovaCo/metrics-latency-reservoir</url>
+
+    <scm>
+        <url>git@github.com:InnovaCo/metrics-latency-reservoir.git</url>
+        <connection>scm:git:git@github.com:InnovaCo/metrics-latency-reservoir.git</connection>
+    </scm>
 
     <properties>
         <maven.compiler.source>1.7</maven.compiler.source>
@@ -20,8 +25,31 @@
     </properties>
 
     <organization>
-        <name>eu.inn</name>
+        <name>Innova Co. S.à r.l.</name>
+        <url>https://github.com/InnovaCo</url>
     </organization>
+
+    <developers>
+        <developer>
+            <id>InnovaCo</id>
+            <name>Innova Co. S.à r.l.</name>
+            <url>https://github.com/InnovaCo</url>
+        </developer>
+        <developer>
+            <id>vkuptcov</id>
+            <name>Vladimir Kuptsov</name>
+            <url>https://github.com/vkuptcov</url>
+        </developer>
+    </developers>
+
+
+    <licenses>
+        <license>
+            <name>BSD-style</name>
+            <url>http://opensource.org/licenses/BSD-3-Clause</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <repositories>
         <repository>

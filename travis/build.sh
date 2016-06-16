@@ -8,7 +8,7 @@ gpg --dearmor ./inn-oss-private.asc
 
 ls -la
 
-if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$TRAVIS_BRANCH" == "master" ]]; then
+if [[ "$TRAVIS_PULL_REQUEST" == "false" && ( "$TRAVIS_BRANCH" == "master" || "$TRAVIS_BRANCH" =~ ^v ) ]]; then
     mvn clean install --settings=./settings-deploy.xml
     mvn deploy -DskipTests=true --settings=./settings-deploy.xml
 else
