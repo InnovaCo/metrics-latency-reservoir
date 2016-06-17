@@ -25,9 +25,7 @@ public class LatencyReservoir implements Reservoir {
 
     private final TimeUnit flushUnit;
 
-    private final int sinkSize;
-
-    private final LinkedBlockingQueue<Option<Histogram>> sink;
+    private final Sink<Histogram> sink;
 
     private volatile boolean valueAddedSinceSnapshotTaken = false;
 
@@ -35,14 +33,13 @@ public class LatencyReservoir implements Reservoir {
         this.stats = stats;
         this.flushPeriod = flushPeriod;
         this.flushUnit = flushUnit;
-        this.sinkSize = sinkSize;
-        this.sink = new LinkedBlockingQueue<>(sinkSize);
+        this.sink = new Sink<>(sinkSize);
         scheduleHistogramFlush();
     }
 
     @Override
     public int size() {
-        Option<Histogram>[] histograms = sink.toArray(new Option[0]);
+        Option<Histogram>[] histograms = sink.toArray();
         int size = 0;
         for (Option<Histogram> hOpt: histograms) {
             if (hOpt.isDefined()) {
@@ -65,7 +62,7 @@ public class LatencyReservoir implements Reservoir {
     }
 
     private Histogram mergeHistogram() {
-        Option<Histogram>[] histograms = sink.toArray(new Option[0]);
+        Option<Histogram>[] histograms = sink.toArray();
 
         long highestTrackableValue = 0;
         long lowestDiscernibleValue = Long.MAX_VALUE;
@@ -115,10 +112,7 @@ public class LatencyReservoir implements Reservoir {
                         histogram = null;
                     }
                 }
-                if (sink.size() == sinkSize) {
-                    sink.poll();
-                }
-                sink.add(Option.create(histogram));
+                sink.add(histogram);
             }
         }, flushPeriod, flushPeriod, flushUnit);
     }
@@ -248,5 +242,28 @@ abstract class Option<T> {
                 }
             };
         }
+    }
+}
+
+class Sink<T> {
+
+    private final int sinkSize;
+
+    private final LinkedBlockingQueue<Option<T>> sink;
+
+    Sink(int sinkSize) {
+        this.sinkSize = sinkSize;
+        this.sink = new LinkedBlockingQueue<>(sinkSize);
+    }
+
+    void add(T element) {
+        if (sink.size() == sinkSize) {
+            sink.poll();
+        }
+        sink.add(Option.create(element));
+    }
+
+    Option<T>[] toArray() {
+        return sink.toArray(new Option[0]);
     }
 }
