@@ -251,19 +251,34 @@ class Sink<T> {
 
     private final LinkedBlockingQueue<Option<T>> sink;
 
+    private final AtomicInteger nonEmptyElementsCount = new AtomicInteger(0);
+
     Sink(int sinkSize) {
         this.sinkSize = sinkSize;
         this.sink = new LinkedBlockingQueue<>(sinkSize);
     }
 
     void add(T element) {
-        if (sink.size() == sinkSize) {
-            sink.poll();
+        Option<T> option = Option.create(element);
+        if (!queueFullOfEmptyElements() || option.isDefined()) {
+            if (sink.size() == sinkSize) {
+                Option<T> polled = sink.poll();
+                if (polled.isDefined()) {
+                    nonEmptyElementsCount.decrementAndGet();
+                }
+            }
+            if (option.isDefined()) {
+                nonEmptyElementsCount.incrementAndGet();
+            }
+            sink.add(option);
         }
-        sink.add(Option.create(element));
     }
 
     Option<T>[] toArray() {
         return sink.toArray(new Option[0]);
+    }
+
+    private boolean queueFullOfEmptyElements() {
+        return sink.size() == sinkSize && nonEmptyElementsCount.get() == 0;
     }
 }
