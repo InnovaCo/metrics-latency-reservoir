@@ -2,9 +2,9 @@ package eu.inn.metrics;
 
 import com.codahale.metrics.*;
 
-public class DefaultMetricBuilder {
+public class DefaultMetricBuilderFactory implements MetricBuilderFactory {
 
-    public static final MetricBuilder<Histogram> HISTOGRAMS = new MetricBuilder<Histogram>() {
+    private static final MetricBuilder<Histogram> HISTOGRAMS = new MetricBuilder<Histogram>() {
         @Override
         public Histogram newMetric() {
             return new Histogram(LatencyReservoir.builder().build());
@@ -17,7 +17,7 @@ public class DefaultMetricBuilder {
     };
 
 
-    public static final MetricBuilder<Timer> TIMERS = new MetricBuilder<Timer>() {
+    private static final MetricBuilder<Timer> TIMERS = new MetricBuilder<Timer>() {
         @Override
         public Timer newMetric() {
             return new Timer(LatencyReservoir.builder().build());
@@ -29,7 +29,7 @@ public class DefaultMetricBuilder {
         }
     };
 
-    public static final MetricBuilder<Counter> COUNTERS = new MetricBuilder<Counter>() {
+    private static final MetricBuilder<Counter> COUNTERS = new MetricBuilder<Counter>() {
         @Override
         public Counter newMetric() {
             return new Counter();
@@ -41,7 +41,7 @@ public class DefaultMetricBuilder {
         }
     };
 
-    public static final MetricBuilder<Meter> METERS = new MetricBuilder<Meter>() {
+    private static final MetricBuilder<Meter> METERS = new MetricBuilder<Meter>() {
         @Override
         public Meter newMetric() {
             return new Meter();
@@ -52,4 +52,24 @@ public class DefaultMetricBuilder {
             return Meter.class.isInstance(metric);
         }
     };
+
+    @Override
+    public MetricBuilder<Histogram> histogramsBuilder() {
+        return HISTOGRAMS;
+    }
+
+    @Override
+    public MetricBuilder<Timer> timersBuilder() {
+        return TIMERS;
+    }
+
+    @Override
+    public MetricBuilder<Counter> countersBuilder() {
+        return COUNTERS;
+    }
+
+    @Override
+    public MetricBuilder<Meter> metersBuilder() {
+        return METERS;
+    }
 }

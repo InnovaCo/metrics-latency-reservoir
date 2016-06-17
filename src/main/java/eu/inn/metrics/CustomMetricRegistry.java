@@ -73,10 +73,14 @@ public class CustomMetricRegistry extends MetricRegistry {
 
 
     public static class Builder {
-        private MetricBuilder<Timer> timersBuilder = DefaultMetricBuilder.TIMERS;
-        private MetricBuilder<Histogram> histogramsBuilder = DefaultMetricBuilder.HISTOGRAMS;
-        private MetricBuilder<Meter> metersBuilder = DefaultMetricBuilder.METERS;
-        private MetricBuilder<Counter> countersBuilder = DefaultMetricBuilder.COUNTERS;
+        private MetricBuilder<Timer> timersBuilder;
+        private MetricBuilder<Histogram> histogramsBuilder;
+        private MetricBuilder<Meter> metersBuilder;
+        private MetricBuilder<Counter> countersBuilder;
+
+        public Builder() {
+            fromFactory(new DefaultMetricBuilderFactory());
+        }
 
         public Builder timersBuilder(MetricBuilder<Timer> timersBuilder) {
             this.timersBuilder = timersBuilder;
@@ -95,6 +99,14 @@ public class CustomMetricRegistry extends MetricRegistry {
 
         public Builder countersBuilder(MetricBuilder<Counter> countersBuilder) {
             this.countersBuilder = countersBuilder;
+            return this;
+        }
+
+        public Builder fromFactory(MetricBuilderFactory factory) {
+            this.timersBuilder = factory.timersBuilder();
+            this.histogramsBuilder = factory.histogramsBuilder();
+            this.metersBuilder = factory.metersBuilder();
+            this.countersBuilder = factory.countersBuilder();
             return this;
         }
 
