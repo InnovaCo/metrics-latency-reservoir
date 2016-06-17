@@ -127,6 +127,9 @@ public class LatencyReservoir implements Reservoir {
         return new Builder();
     }
 
+    /**
+     * @todo synchronize LatencyStats settings with a window and a flush settings
+     */
     public static class Builder {
         private LatencyStats stats = new LatencyStats();
 
