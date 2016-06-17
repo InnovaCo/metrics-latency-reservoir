@@ -104,6 +104,9 @@ public class LatencyReservoir implements Reservoir {
         executor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
+                /**
+                 * @todo do not take a knowingly empty histogram
+                 */
                 Histogram histogram = stats.getIntervalHistogram();
                 if (sink.size() == sinkSize) {
                     sink.poll();
