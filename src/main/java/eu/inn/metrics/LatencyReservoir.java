@@ -9,9 +9,15 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @todo provide a method for returning only new histograms for a concrete reporter
+ * @todo
+ *  1. provide a method for returning only new histograms for a concrete reporter
+ *  2. make an immutable histogram class and use its empty instance instead of the domestic option
  */
 public class LatencyReservoir implements Reservoir {
+
+    private final static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory());
+
+    private final static Histogram emptyHistogram = new Histogram(0);
 
     private final LatencyStats stats;
 
@@ -22,8 +28,6 @@ public class LatencyReservoir implements Reservoir {
     private final int sinkSize;
 
     private final LinkedBlockingQueue<Option<Histogram>> sink;
-
-    private final static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory());
 
     public LatencyReservoir(LatencyStats stats, long flushPeriod, TimeUnit flushUnit, int sinkSize) {
         this.stats = stats;
@@ -60,12 +64,8 @@ public class LatencyReservoir implements Reservoir {
     private Histogram mergeHistogram() {
         Option<Histogram>[] histograms = sink.toArray(new Option[0]);
 
-        /**
-         * lowest possible values taken directly from
-         * the org.HdrHistogram.AbstractHistogram constructor
-         */
-        long highestTrackableValue = 2;
-        long lowestDiscernibleValue = 1;
+        long highestTrackableValue = 0;
+        long lowestDiscernibleValue = Long.MAX_VALUE;
         int numberOfSignificantValueDigits = 0;
 
         for (Option<Histogram> hOpt: histograms) {
@@ -74,7 +74,7 @@ public class LatencyReservoir implements Reservoir {
                 if (h.getHighestTrackableValue() > highestTrackableValue) {
                     highestTrackableValue = h.getHighestTrackableValue();
                 }
-                if (h.getLowestDiscernibleValue() > lowestDiscernibleValue) {
+                if (h.getLowestDiscernibleValue() < lowestDiscernibleValue) {
                     lowestDiscernibleValue = h.getLowestDiscernibleValue();
                 }
                 if (h.getNumberOfSignificantValueDigits() > numberOfSignificantValueDigits) {
@@ -82,13 +82,22 @@ public class LatencyReservoir implements Reservoir {
                 }
             }
         }
-        Histogram mergedHistogram = new Histogram(lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits);
-        for (Option<Histogram> hOpt: histograms) {
-            if (hOpt.isDefined()) {
-                mergedHistogram.add(hOpt.get());
+        if (highestTrackableValue == 0) {
+            /**
+             * we could make a copy of the histogram here to avoid unwanted mutations,
+             * but it's better to make an immutable histogram object.
+             * Furthermore, right now we could control the instance lifecycle and could be sure we do not change it.
+             */
+            return emptyHistogram;
+        } else {
+            Histogram mergedHistogram = new Histogram(lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits);
+            for (Option<Histogram> hOpt: histograms) {
+                if (hOpt.isDefined()) {
+                    mergedHistogram.add(hOpt.get());
+                }
             }
+            return mergedHistogram;
         }
-        return mergedHistogram;
     }
 
     private void scheduleHistogramFlush() {
