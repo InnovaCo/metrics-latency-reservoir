@@ -5,6 +5,8 @@ import com.codahale.metrics.Snapshot;
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,12 +41,9 @@ public class LatencyReservoir implements Reservoir {
 
     @Override
     public int size() {
-        Option<Histogram>[] histograms = sink.toArray();
         int size = 0;
-        for (Option<Histogram> hOpt: histograms) {
-            if (hOpt.isDefined()) {
-                size += hOpt.get().getTotalCount();
-            }
+        for (Histogram h: sink.getAll()) {
+            size += h.getTotalCount();
         }
         return size;
     }
@@ -62,24 +61,21 @@ public class LatencyReservoir implements Reservoir {
     }
 
     private Histogram mergeHistogram() {
-        Option<Histogram>[] histograms = sink.toArray();
-
         long highestTrackableValue = 0;
         long lowestDiscernibleValue = Long.MAX_VALUE;
         int numberOfSignificantValueDigits = 0;
 
-        for (Option<Histogram> hOpt: histograms) {
-            if (hOpt.isDefined()) {
-                Histogram h = hOpt.get();
-                if (h.getHighestTrackableValue() > highestTrackableValue) {
-                    highestTrackableValue = h.getHighestTrackableValue();
-                }
-                if (h.getLowestDiscernibleValue() < lowestDiscernibleValue) {
-                    lowestDiscernibleValue = h.getLowestDiscernibleValue();
-                }
-                if (h.getNumberOfSignificantValueDigits() > numberOfSignificantValueDigits) {
-                    numberOfSignificantValueDigits = h.getNumberOfSignificantValueDigits();
-                }
+        List<Histogram> histogramList = sink.getAll();
+
+        for (Histogram h: histogramList) {
+            if (h.getHighestTrackableValue() > highestTrackableValue) {
+                highestTrackableValue = h.getHighestTrackableValue();
+            }
+            if (h.getLowestDiscernibleValue() < lowestDiscernibleValue) {
+                lowestDiscernibleValue = h.getLowestDiscernibleValue();
+            }
+            if (h.getNumberOfSignificantValueDigits() > numberOfSignificantValueDigits) {
+                numberOfSignificantValueDigits = h.getNumberOfSignificantValueDigits();
             }
         }
         if (highestTrackableValue == 0) {
@@ -91,10 +87,8 @@ public class LatencyReservoir implements Reservoir {
             return emptyHistogram;
         } else {
             Histogram mergedHistogram = new Histogram(lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits);
-            for (Option<Histogram> hOpt: histograms) {
-                if (hOpt.isDefined()) {
-                    mergedHistogram.add(hOpt.get());
-                }
+            for (Histogram h: histogramList) {
+                mergedHistogram.add(h);
             }
             return mergedHistogram;
         }
@@ -258,27 +252,40 @@ class Sink<T> {
         this.sink = new LinkedBlockingQueue<>(sinkSize);
     }
 
-    void add(T element) {
+    boolean add(T element) {
         Option<T> option = Option.create(element);
-        if (!queueFullOfEmptyElements() || option.isDefined()) {
-            if (sink.size() == sinkSize) {
-                Option<T> polled = sink.poll();
-                if (polled.isDefined()) {
-                    nonEmptyElementsCount.decrementAndGet();
-                }
-            }
-            if (option.isDefined()) {
-                nonEmptyElementsCount.incrementAndGet();
-            }
-            sink.add(option);
+        boolean needInsertElement = !queueFullOfEmptyElements() || option.isDefined();
+        if (needInsertElement) {
+            return insertAndSlide(option);
         }
+        return false;
     }
 
-    Option<T>[] toArray() {
-        return sink.toArray(new Option[0]);
+    List<T> getAll() {
+        Option<T>[] options = sink.toArray(new Option[0]);
+        ArrayList<T> list = new ArrayList<>(options.length);
+        for (Option<T> option: options) {
+            if (option.isDefined()) {
+                list.add(option.get());
+            }
+        }
+        return list;
     }
 
     private boolean queueFullOfEmptyElements() {
         return sink.size() == sinkSize && nonEmptyElementsCount.get() == 0;
+    }
+
+    private boolean insertAndSlide(Option<T> option) {
+        if (sink.size() == sinkSize) {
+            Option<T> polled = sink.poll();
+            if (polled.isDefined()) {
+                nonEmptyElementsCount.decrementAndGet();
+            }
+        }
+        if (option.isDefined()) {
+            nonEmptyElementsCount.incrementAndGet();
+        }
+        return sink.add(option);
     }
 }
