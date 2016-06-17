@@ -29,6 +29,8 @@ public class LatencyReservoir implements Reservoir {
 
     private final LinkedBlockingQueue<Option<Histogram>> sink;
 
+    private volatile boolean valueAddedSinceSnapshotTaken = false;
+
     public LatencyReservoir(LatencyStats stats, long flushPeriod, TimeUnit flushUnit, int sinkSize) {
         this.stats = stats;
         this.flushPeriod = flushPeriod;
@@ -52,6 +54,7 @@ public class LatencyReservoir implements Reservoir {
 
     @Override
     public void update(long value) {
+        valueAddedSinceSnapshotTaken = true;
         stats.recordLatency(value);
     }
 
@@ -104,18 +107,18 @@ public class LatencyReservoir implements Reservoir {
         executor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                /**
-                 * @todo do not take a knowingly empty histogram
-                 */
-                Histogram histogram = stats.getIntervalHistogram();
+                Histogram histogram = null;
+                if (valueAddedSinceSnapshotTaken) {
+                    valueAddedSinceSnapshotTaken = false; // a possible race condition here
+                    histogram = stats.getIntervalHistogram();
+                    if (histogram.getTotalCount() == 0) {
+                        histogram = null;
+                    }
+                }
                 if (sink.size() == sinkSize) {
                     sink.poll();
                 }
-                if (histogram.getTotalCount() != 0) {
-                    sink.add(Option.create(histogram));
-                } else {
-                    sink.add(Option.None);
-                }
+                sink.add(Option.create(histogram));
             }
         }, flushPeriod, flushPeriod, flushUnit);
     }
@@ -214,7 +217,7 @@ abstract class Option<T> {
 
     abstract T get();
 
-    final static Option None = new Option() {
+    private final static Option None = new Option() {
         @Override
         boolean isDefined() {
             return false;
