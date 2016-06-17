@@ -21,7 +21,7 @@ public class LatencyReservoir implements Reservoir {
 
     private final int sinkSize;
 
-    private final LinkedBlockingQueue<Histogram> sink;
+    private final LinkedBlockingQueue<Option<Histogram>> sink;
 
     private final static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory());
 
@@ -36,10 +36,12 @@ public class LatencyReservoir implements Reservoir {
 
     @Override
     public int size() {
-        Histogram[] histograms = sink.toArray(new Histogram[0]);
+        Option<Histogram>[] histograms = sink.toArray(new Option[0]);
         int size = 0;
-        for (Histogram h: histograms) {
-            size += h.getTotalCount();
+        for (Option<Histogram> hOpt: histograms) {
+            if (hOpt.isDefined()) {
+                size += hOpt.get().getTotalCount();
+            }
         }
         return size;
     }
@@ -56,7 +58,7 @@ public class LatencyReservoir implements Reservoir {
     }
 
     private Histogram mergeHistogram() {
-        Histogram[] histograms = sink.toArray(new Histogram[0]);
+        Option<Histogram>[] histograms = sink.toArray(new Option[0]);
 
         /**
          * lowest possible values taken directly from
@@ -66,20 +68,25 @@ public class LatencyReservoir implements Reservoir {
         long lowestDiscernibleValue = 1;
         int numberOfSignificantValueDigits = 0;
 
-        for (Histogram h: histograms) {
-            if (h.getHighestTrackableValue() > highestTrackableValue) {
-                highestTrackableValue = h.getHighestTrackableValue();
-            }
-            if (h.getLowestDiscernibleValue() > lowestDiscernibleValue) {
-                lowestDiscernibleValue = h.getLowestDiscernibleValue();
-            }
-            if (h.getNumberOfSignificantValueDigits() > numberOfSignificantValueDigits) {
-                numberOfSignificantValueDigits = h.getNumberOfSignificantValueDigits();
+        for (Option<Histogram> hOpt: histograms) {
+            if (hOpt.isDefined()) {
+                Histogram h = hOpt.get();
+                if (h.getHighestTrackableValue() > highestTrackableValue) {
+                    highestTrackableValue = h.getHighestTrackableValue();
+                }
+                if (h.getLowestDiscernibleValue() > lowestDiscernibleValue) {
+                    lowestDiscernibleValue = h.getLowestDiscernibleValue();
+                }
+                if (h.getNumberOfSignificantValueDigits() > numberOfSignificantValueDigits) {
+                    numberOfSignificantValueDigits = h.getNumberOfSignificantValueDigits();
+                }
             }
         }
         Histogram mergedHistogram = new Histogram(lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits);
-        for (Histogram h: histograms) {
-            mergedHistogram.add(h);
+        for (Option<Histogram> hOpt: histograms) {
+            if (hOpt.isDefined()) {
+                mergedHistogram.add(hOpt.get());
+            }
         }
         return mergedHistogram;
     }
@@ -92,7 +99,11 @@ public class LatencyReservoir implements Reservoir {
                 if (sink.size() == sinkSize) {
                     sink.poll();
                 }
-                sink.add(histogram);
+                if (histogram.getTotalCount() != 0) {
+                    sink.add(Option.create(histogram));
+                } else {
+                    sink.add(Option.None);
+                }
             }
         }, flushPeriod, flushPeriod, flushUnit);
     }
@@ -182,5 +193,42 @@ class NamedThreadFactory implements ThreadFactory {
         t.setDaemon(true);
         t.setPriority(Thread.NORM_PRIORITY);
         return t;
+    }
+}
+
+abstract class Option<T> {
+
+    abstract boolean isDefined();
+
+    abstract T get();
+
+    final static Option None = new Option() {
+        @Override
+        boolean isDefined() {
+            return false;
+        }
+
+        @Override
+        Object get() {
+            return null;
+        }
+    };
+
+    static <T> Option<T> create(final T value) {
+        if (value == null) {
+            return None;
+        } else {
+            return new Option<T>() {
+                @Override
+                boolean isDefined() {
+                    return true;
+                }
+
+                @Override
+                T get() {
+                    return value;
+                }
+            };
+        }
     }
 }
