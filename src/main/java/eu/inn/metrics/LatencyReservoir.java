@@ -19,7 +19,7 @@ public class LatencyReservoir implements Reservoir {
 
     private final static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory());
 
-    private final static Histogram emptyHistogram = new Histogram(0);
+    private final static HistogramSnapshot emptyHistogramSnapshot = new HistogramSnapshot(new Histogram(0));
 
     private final LatencyStats stats;
 
@@ -56,11 +56,6 @@ public class LatencyReservoir implements Reservoir {
 
     @Override
     public Snapshot getSnapshot() {
-        Histogram mergedHistogram = mergeHistogram();
-        return new HistogramSnapshot(mergedHistogram);
-    }
-
-    private Histogram mergeHistogram() {
         long highestTrackableValue = 0;
         long lowestDiscernibleValue = Long.MAX_VALUE;
         int numberOfSignificantValueDigits = 0;
@@ -79,18 +74,13 @@ public class LatencyReservoir implements Reservoir {
             }
         }
         if (highestTrackableValue == 0) {
-            /**
-             * we could make a copy of the histogram here to avoid unwanted mutations,
-             * but it's better to make an immutable histogram object.
-             * Furthermore, right now we could control the instance lifecycle and could be sure we do not change it.
-             */
-            return emptyHistogram;
+            return emptyHistogramSnapshot;
         } else {
             Histogram mergedHistogram = new Histogram(lowestDiscernibleValue, highestTrackableValue, numberOfSignificantValueDigits);
             for (Histogram h: histogramList) {
                 mergedHistogram.add(h);
             }
-            return mergedHistogram;
+            return new HistogramSnapshot(mergedHistogram);
         }
     }
 
