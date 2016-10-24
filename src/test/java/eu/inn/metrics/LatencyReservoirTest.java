@@ -12,13 +12,13 @@ public class LatencyReservoirTest {
 
     @Test
     public void emptyReservoir() {
-        LatencyReservoir reservoir = LatencyReservoir.builder().build();
+        HdrLatencyReservoir reservoir = HdrLatencyReservoir.builder().build();
         assertEmpty(reservoir);
     }
 
     @Test
     public void nonEmptyReservoir_CollectAllMetricsFromTheFirstWindow() throws InterruptedException {
-        LatencyReservoir reservoir = createReservoir(100);
+        HdrLatencyReservoir reservoir = createReservoir(100);
 
         final int metricsCount = 100;
 
@@ -31,7 +31,7 @@ public class LatencyReservoirTest {
 
     @Test
     public void nonEmptyReservoir_BecomesEmptyAfterOldWindowsSlided() throws InterruptedException {
-        LatencyReservoir reservoir = createReservoir(10);
+        HdrLatencyReservoir reservoir = createReservoir(10);
         final int metricsCount = 100;
 
         track(reservoir, metricsCount);
@@ -43,7 +43,7 @@ public class LatencyReservoirTest {
 
     @Test
     public void nonEmptyReservoir_BecomesOperationalAfterSliding() throws InterruptedException {
-        LatencyReservoir reservoir = createReservoir(10);
+        HdrLatencyReservoir reservoir = createReservoir(10);
         track(reservoir, 1000);
         Thread.sleep(150);
         assertEmpty(reservoir);
@@ -53,22 +53,22 @@ public class LatencyReservoirTest {
         assertNonEmpty(reservoir, 10);
     }
 
-    private LatencyReservoir createReservoir(long flushInMillis) {
+    private HdrLatencyReservoir createReservoir(long flushInMillis) {
         LatencyStats stats = LatencyStats.Builder.create()
                 .lowestTrackableLatency(1)
                 .highestTrackableLatency(Long.MAX_VALUE)
                 .build();
 
-        return LatencyReservoir.builder().stats(stats).flush(10, TimeUnit.MILLISECONDS).build();
+        return HdrLatencyReservoir.builder().stats(stats).flush(10, TimeUnit.MILLISECONDS).build();
     }
 
-    private void track(LatencyReservoir reservoir, int metricsCount) {
+    private void track(HdrLatencyReservoir reservoir, int metricsCount) {
         for (long i = 1; i <= metricsCount; i++) {
             reservoir.update(i);
         }
     }
 
-    private void assertEmpty(LatencyReservoir reservoir) {
+    private void assertEmpty(HdrLatencyReservoir reservoir) {
         Snapshot snapshot = reservoir.getSnapshot();
 
         assertEquals("Empty reservoir size should be 0", 0, reservoir.size());
@@ -77,7 +77,7 @@ public class LatencyReservoirTest {
         assertEquals("Empty snapshot max should be 0", 0, snapshot.getMax());
     }
 
-    private void assertNonEmpty(LatencyReservoir reservoir, int max) {
+    private void assertNonEmpty(HdrLatencyReservoir reservoir, int max) {
         Snapshot snapshot = reservoir.getSnapshot();
 
         assertEquals("Unexpected reservoir size", max, reservoir.size());

@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *  1. provide a method for returning only new histograms for a concrete reporter
  *  2. make an immutable histogram class and use its empty instance instead of the domestic option
  */
-public class LatencyReservoir implements Reservoir {
+public class HdrLatencyReservoir implements Reservoir {
 
     private final static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory());
 
@@ -31,7 +31,7 @@ public class LatencyReservoir implements Reservoir {
 
     private volatile boolean valueAddedSinceSnapshotTaken = false;
 
-    public LatencyReservoir(LatencyStats stats, long flushPeriod, TimeUnit flushUnit, int sinkSize) {
+    public HdrLatencyReservoir(LatencyStats stats, long flushPeriod, TimeUnit flushUnit, int sinkSize) {
         this.stats = stats;
         this.flushPeriod = flushPeriod;
         this.flushUnit = flushUnit;
@@ -101,7 +101,7 @@ public class LatencyReservoir implements Reservoir {
         }, flushPeriod, flushPeriod, flushUnit);
     }
 
-    public static LatencyReservoir.Builder builder() {
+    public static HdrLatencyReservoir.Builder builder() {
         return new Builder();
     }
 
@@ -147,7 +147,7 @@ public class LatencyReservoir implements Reservoir {
             return this;
         }
 
-        public LatencyReservoir build() {
+        public HdrLatencyReservoir build() {
             if (windowUnit != null && sinkSize != 0) {
                 throw new IllegalArgumentException("Either window parameters or sinkSize should be set");
             }
@@ -158,7 +158,7 @@ public class LatencyReservoir implements Reservoir {
             if (sinkSize == 0) {
                 sinkSize = DEFAULT_SINK_SIZE;
             }
-            return new LatencyReservoir(stats, flushPeriod, flushUnit, sinkSize);
+            return new HdrLatencyReservoir(stats, flushPeriod, flushUnit, sinkSize);
         }
 
         private static void validatePeriods(String name, long period, TimeUnit unit) {

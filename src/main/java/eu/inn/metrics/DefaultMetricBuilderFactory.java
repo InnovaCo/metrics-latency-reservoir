@@ -2,12 +2,14 @@ package eu.inn.metrics;
 
 import com.codahale.metrics.*;
 
+import java.util.concurrent.TimeUnit;
+
 public class DefaultMetricBuilderFactory implements MetricBuilderFactory {
 
     private static final MetricBuilder<Histogram> HISTOGRAMS = new MetricBuilder<Histogram>() {
         @Override
         public Histogram newMetric() {
-            return new Histogram(LatencyReservoir.builder().build());
+            return new Histogram(HdrLatencyReservoir.builder().build());
         }
 
         @Override
@@ -20,7 +22,7 @@ public class DefaultMetricBuilderFactory implements MetricBuilderFactory {
     private static final MetricBuilder<Timer> TIMERS = new MetricBuilder<Timer>() {
         @Override
         public Timer newMetric() {
-            return new Timer(LatencyReservoir.builder().build());
+            return new Timer(new SlidingExponentialDecayingReservoir(1, TimeUnit.SECONDS, 11));
         }
 
         @Override
