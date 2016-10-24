@@ -4,6 +4,8 @@ import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.WeightedSnapshot;
+import eu.inn.metrics.staff.NamedThreadFactory;
+import eu.inn.metrics.staff.Sink;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

@@ -1,5 +1,6 @@
 package eu.inn.metrics;
 
+import eu.inn.metrics.staff.Sink;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
