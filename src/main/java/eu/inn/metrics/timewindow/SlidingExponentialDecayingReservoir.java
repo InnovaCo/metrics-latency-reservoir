@@ -1,4 +1,4 @@
-package eu.inn.metrics;
+package eu.inn.metrics.timewindow;
 
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Reservoir;
