@@ -1,17 +1,21 @@
 package eu.inn.metrics;
 
 import com.codahale.metrics.*;
-import eu.inn.metrics.hdr.HdrLatencyReservoir;
 import eu.inn.metrics.sed.SlidingExponentialDecayingReservoir;
+import eu.inn.metrics.staff.TimeWindowReservoirBuilder;
 
 import java.util.concurrent.TimeUnit;
 
 public class DefaultMetricBuilderFactory implements MetricBuilderFactory {
 
+    private final static TimeWindowReservoirBuilder defaultReservoirBuilder = SlidingExponentialDecayingReservoir.builder()
+            .flushAt(1, TimeUnit.SECONDS)
+            .window(15, TimeUnit.SECONDS);
+
     private static final MetricBuilder<Histogram> HISTOGRAMS = new MetricBuilder<Histogram>() {
         @Override
         public Histogram newMetric() {
-            return new Histogram(HdrLatencyReservoir.builder().build());
+            return new Histogram(defaultReservoirBuilder.build());
         }
 
         @Override
@@ -24,7 +28,7 @@ public class DefaultMetricBuilderFactory implements MetricBuilderFactory {
     private static final MetricBuilder<Timer> TIMERS = new MetricBuilder<Timer>() {
         @Override
         public Timer newMetric() {
-            return new Timer(new SlidingExponentialDecayingReservoir(1, TimeUnit.SECONDS, 11));
+            return new Timer(defaultReservoirBuilder.build());
         }
 
         @Override
