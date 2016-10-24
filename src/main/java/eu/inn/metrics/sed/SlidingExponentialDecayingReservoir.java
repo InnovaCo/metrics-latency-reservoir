@@ -1,9 +1,9 @@
 package eu.inn.metrics.sed;
 
 import com.codahale.metrics.*;
-import eu.inn.metrics.staff.NamedThreadFactory;
-import eu.inn.metrics.staff.Sink;
-import eu.inn.metrics.staff.TimeWindowReservoirBuilder;
+import eu.inn.metrics.common.NamedThreadFactory;
+import eu.inn.metrics.common.Sink;
+import eu.inn.metrics.common.TimeWindowReservoirBuilder;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

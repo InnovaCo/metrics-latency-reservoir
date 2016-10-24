@@ -2,9 +2,9 @@ package eu.inn.metrics.hdr;
 
 import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Snapshot;
-import eu.inn.metrics.staff.NamedThreadFactory;
-import eu.inn.metrics.staff.Sink;
-import eu.inn.metrics.staff.TimeWindowReservoirBuilder;
+import eu.inn.metrics.common.NamedThreadFactory;
+import eu.inn.metrics.common.Sink;
+import eu.inn.metrics.common.TimeWindowReservoirBuilder;
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
 

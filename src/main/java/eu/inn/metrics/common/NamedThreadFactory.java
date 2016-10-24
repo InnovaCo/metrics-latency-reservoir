@@ -1,4 +1,4 @@
-package eu.inn.metrics.staff;
+package eu.inn.metrics.common;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

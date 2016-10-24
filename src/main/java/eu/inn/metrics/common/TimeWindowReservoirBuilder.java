@@ -1,4 +1,4 @@
-package eu.inn.metrics.staff;
+package eu.inn.metrics.common;
 
 import com.codahale.metrics.Reservoir;
 

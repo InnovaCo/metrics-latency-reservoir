@@ -2,7 +2,7 @@ package eu.inn.metrics;
 
 import com.codahale.metrics.*;
 import eu.inn.metrics.sed.SlidingExponentialDecayingReservoir;
-import eu.inn.metrics.staff.TimeWindowReservoirBuilder;
+import eu.inn.metrics.common.TimeWindowReservoirBuilder;
 
 import java.util.concurrent.TimeUnit;
 
