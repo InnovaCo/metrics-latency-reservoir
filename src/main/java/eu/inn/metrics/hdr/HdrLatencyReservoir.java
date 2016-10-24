@@ -4,6 +4,7 @@ import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Snapshot;
 import eu.inn.metrics.staff.NamedThreadFactory;
 import eu.inn.metrics.staff.Sink;
+import eu.inn.metrics.staff.TimeWindowReservoirBuilder;
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
 
@@ -108,66 +109,18 @@ public class HdrLatencyReservoir implements Reservoir {
     /**
      * @todo synchronize LatencyStats settings with a window and a flush settings
      */
-    public static class Builder {
+    public static class Builder extends TimeWindowReservoirBuilder<HdrLatencyReservoir> {
+
         private LatencyStats stats = new LatencyStats();
-
-        private long flushPeriod = 5;
-        private TimeUnit flushUnit = TimeUnit.SECONDS;
-
-        private int sinkSize;
-        private long window;
-        private TimeUnit windowUnit;
-
-        private final int DEFAULT_SINK_SIZE = 12;
 
         public Builder stats(LatencyStats stats) {
             this.stats = stats;
             return this;
         }
 
-        public Builder flush(long flushPeriod, TimeUnit flushUnit) {
-            validatePeriods("flushPeriod", flushPeriod, flushUnit);
-            this.flushPeriod = flushPeriod;
-            this.flushUnit = flushUnit;
-            return this;
-        }
-
-        public Builder sinkSize(int sinkSize) {
-            if (sinkSize < 1) {
-                throw new IllegalArgumentException("sinkSize should be positive integer");
-            }
-            this.sinkSize = sinkSize;
-            return this;
-        }
-
-        public Builder window(long window, TimeUnit windowUnit) {
-            validatePeriods("window", window, windowUnit);
-            this.window = window;
-            this.windowUnit = windowUnit;
-            return this;
-        }
-
         public HdrLatencyReservoir build() {
-            if (windowUnit != null && sinkSize != 0) {
-                throw new IllegalArgumentException("Either window parameters or sinkSize should be set");
-            }
-            if (windowUnit != null) {
-                sinkSize = (int) Math.ceil((double) windowUnit.toNanos(window) / flushUnit.toNanos(flushPeriod));
-            }
-
-            if (sinkSize == 0) {
-                sinkSize = DEFAULT_SINK_SIZE;
-            }
+            int sinkSize = (int) Math.ceil((double) windowUnit.toNanos(window) / flushUnit.toNanos(flushPeriod));
             return new HdrLatencyReservoir(stats, flushPeriod, flushUnit, sinkSize);
-        }
-
-        private static void validatePeriods(String name, long period, TimeUnit unit) {
-            if (period <= 0) {
-                throw new IllegalArgumentException(name + " duration should be positive integer");
-            }
-            if (unit == null) {
-                throw new IllegalArgumentException(name + " unit should be non-null");
-            }
         }
     }
 }

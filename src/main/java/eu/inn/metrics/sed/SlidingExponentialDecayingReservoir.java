@@ -1,11 +1,9 @@
-package eu.inn.metrics.timewindow;
+package eu.inn.metrics.sed;
 
-import com.codahale.metrics.ExponentiallyDecayingReservoir;
-import com.codahale.metrics.Reservoir;
-import com.codahale.metrics.Snapshot;
-import com.codahale.metrics.WeightedSnapshot;
+import com.codahale.metrics.*;
 import eu.inn.metrics.staff.NamedThreadFactory;
 import eu.inn.metrics.staff.Sink;
+import eu.inn.metrics.staff.TimeWindowReservoirBuilder;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -51,7 +49,6 @@ public class SlidingExponentialDecayingReservoir implements Reservoir {
         for (Collection<WeightedSnapshot.WeightedSample> s : sink.getAll()) {
             size += s.size();
         }
-        System.out.println("SIZE " + size);
         return size;
     }
 
@@ -90,60 +87,15 @@ public class SlidingExponentialDecayingReservoir implements Reservoir {
         }, flushPeriod, flushPeriod, flushUnit);
     }
 
-    public static class Builder {
+    public static SlidingExponentialDecayingReservoir.Builder builder() {
+        return new Builder();
+    }
 
-        private long flushPeriod = 1;
-        private TimeUnit flushUnit = TimeUnit.SECONDS;
-
-        private int sinkSize;
-        private long window;
-        private TimeUnit windowUnit;
-
-        private final int DEFAULT_SINK_SIZE = 15;
-
-        public Builder flush(long flushPeriod, TimeUnit flushUnit) {
-            validatePeriods("flushPeriod", flushPeriod, flushUnit);
-            this.flushPeriod = flushPeriod;
-            this.flushUnit = flushUnit;
-            return this;
-        }
-
-        public Builder sinkSize(int sinkSize) {
-            if (sinkSize < 1) {
-                throw new IllegalArgumentException("sinkSize should be positive integer");
-            }
-            this.sinkSize = sinkSize;
-            return this;
-        }
-
-        public Builder window(long window, TimeUnit windowUnit) {
-            validatePeriods("window", window, windowUnit);
-            this.window = window;
-            this.windowUnit = windowUnit;
-            return this;
-        }
+    public static class Builder extends TimeWindowReservoirBuilder<SlidingExponentialDecayingReservoir> {
 
         public SlidingExponentialDecayingReservoir build() {
-            if (windowUnit != null && sinkSize != 0) {
-                throw new IllegalArgumentException("Either window parameters or sinkSize should be set");
-            }
-            if (windowUnit != null) {
-                sinkSize = (int) Math.ceil((double) windowUnit.toNanos(window) / flushUnit.toNanos(flushPeriod));
-            }
-
-            if (sinkSize == 0) {
-                sinkSize = DEFAULT_SINK_SIZE;
-            }
+            int sinkSize = (int) Math.ceil((double) windowUnit.toNanos(window) / flushUnit.toNanos(flushPeriod));
             return new SlidingExponentialDecayingReservoir(flushPeriod, flushUnit, sinkSize);
-        }
-
-        private static void validatePeriods(String name, long period, TimeUnit unit) {
-            if (period <= 0) {
-                throw new IllegalArgumentException(name + " duration should be positive integer");
-            }
-            if (unit == null) {
-                throw new IllegalArgumentException(name + " unit should be non-null");
-            }
         }
     }
 }

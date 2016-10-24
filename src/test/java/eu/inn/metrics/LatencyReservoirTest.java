@@ -60,7 +60,7 @@ public class LatencyReservoirTest {
                 .highestTrackableLatency(Long.MAX_VALUE)
                 .build();
 
-        return HdrLatencyReservoir.builder().stats(stats).flush(10, TimeUnit.MILLISECONDS).build();
+        return HdrLatencyReservoir.builder().stats(stats).flushAt(10, TimeUnit.MILLISECONDS).window(120, TimeUnit.MILLISECONDS).build();
     }
 
     private void track(HdrLatencyReservoir reservoir, int metricsCount) {
