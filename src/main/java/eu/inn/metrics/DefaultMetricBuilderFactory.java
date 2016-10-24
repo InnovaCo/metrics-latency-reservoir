@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 public class DefaultMetricBuilderFactory implements MetricBuilderFactory {
 
     private final static TimeWindowReservoirBuilder defaultReservoirBuilder = SlidingExponentialDecayingReservoir.builder()
-            .flushAt(1, TimeUnit.SECONDS)
+            .flushEvery(1, TimeUnit.SECONDS)
             .window(15, TimeUnit.SECONDS);
 
     private static final MetricBuilder<Histogram> HISTOGRAMS = new MetricBuilder<Histogram>() {

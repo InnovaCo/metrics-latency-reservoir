@@ -62,7 +62,7 @@ public class LatencyReservoirTest {
 
         return HdrLatencyReservoir.builder()
                 .stats(stats)
-                .flushAt(flushInMillis, TimeUnit.MILLISECONDS)
+                .flushEvery(flushInMillis, TimeUnit.MILLISECONDS)
                 .window(120, TimeUnit.MILLISECONDS)
                .build();
     }

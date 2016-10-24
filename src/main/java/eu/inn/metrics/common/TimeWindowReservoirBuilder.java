@@ -12,7 +12,7 @@ public abstract class TimeWindowReservoirBuilder<T extends Reservoir> {
     protected long window = 15;
     protected TimeUnit windowUnit = TimeUnit.SECONDS;
 
-    public TimeWindowReservoirBuilder<T> flushAt(long flushPeriod, TimeUnit flushUnit) {
+    public TimeWindowReservoirBuilder<T> flushEvery(long flushPeriod, TimeUnit flushUnit) {
         validatePeriods("flushPeriod", flushPeriod, flushUnit);
         this.flushPeriod = flushPeriod;
         this.flushUnit = flushUnit;
