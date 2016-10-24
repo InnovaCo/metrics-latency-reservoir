@@ -1,4 +1,4 @@
-package eu.inn.metrics;
+package eu.inn.metrics.hdr;
 
 import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Snapshot;

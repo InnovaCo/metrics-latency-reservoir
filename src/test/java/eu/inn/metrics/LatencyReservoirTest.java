@@ -1,6 +1,7 @@
 package eu.inn.metrics;
 
 import com.codahale.metrics.Snapshot;
+import eu.inn.metrics.hdr.HdrLatencyReservoir;
 import org.LatencyUtils.LatencyStats;
 import org.testng.annotations.Test;
 

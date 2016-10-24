@@ -1,6 +1,7 @@
 package eu.inn.metrics;
 
 import com.codahale.metrics.*;
+import eu.inn.metrics.hdr.HdrLatencyReservoir;
 
 import java.util.concurrent.TimeUnit;
 
