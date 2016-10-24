@@ -1,4 +1,4 @@
-package eu.inn.metrics;
+package eu.inn.metrics.staff;
 
 import eu.inn.metrics.staff.Sink;
 import org.testng.annotations.Test;
