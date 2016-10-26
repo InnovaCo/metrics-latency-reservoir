@@ -6,16 +6,32 @@ import eu.inn.metrics.common.TimeWindowReservoirBuilder;
 
 import java.util.concurrent.TimeUnit;
 
-public class DefaultMetricBuilderFactory implements MetricBuilderFactory {
+public class TimeWindowMetricBuilderFactory implements MetricBuilderFactory {
 
-    private final static TimeWindowReservoirBuilder defaultReservoirBuilder = SlidingExponentialDecayingReservoir.builder()
-            .flushEvery(1, TimeUnit.SECONDS)
-            .window(15, TimeUnit.SECONDS);
+    private final TimeWindowReservoirBuilder reservoirBuilder;
 
-    private static final MetricBuilder<Histogram> HISTOGRAMS = new MetricBuilder<Histogram>() {
+    public TimeWindowMetricBuilderFactory() {
+        this(15, TimeUnit.SECONDS);
+    }
+
+    public TimeWindowMetricBuilderFactory(long window, TimeUnit windowUnit) {
+        this(1, TimeUnit.SECONDS, window, windowUnit);
+    }
+
+    public TimeWindowMetricBuilderFactory(long flushPeriod, TimeUnit flushUnit, long window, TimeUnit windowUnit) {
+        this(SlidingExponentialDecayingReservoir.builder()
+                .flushEvery(flushPeriod, flushUnit)
+                .window(window, windowUnit));
+    }
+
+    public TimeWindowMetricBuilderFactory(TimeWindowReservoirBuilder reservoirBuilder) {
+        this.reservoirBuilder = reservoirBuilder;
+    }
+
+    private final MetricBuilder<Histogram> HISTOGRAMS = new MetricBuilder<Histogram>() {
         @Override
         public Histogram newMetric() {
-            return new Histogram(defaultReservoirBuilder.build());
+            return new Histogram(reservoirBuilder.build());
         }
 
         @Override
@@ -25,10 +41,10 @@ public class DefaultMetricBuilderFactory implements MetricBuilderFactory {
     };
 
 
-    private static final MetricBuilder<Timer> TIMERS = new MetricBuilder<Timer>() {
+    private final MetricBuilder<Timer> TIMERS = new MetricBuilder<Timer>() {
         @Override
         public Timer newMetric() {
-            return new Timer(defaultReservoirBuilder.build());
+            return new Timer(reservoirBuilder.build());
         }
 
         @Override
@@ -37,7 +53,7 @@ public class DefaultMetricBuilderFactory implements MetricBuilderFactory {
         }
     };
 
-    private static final MetricBuilder<Counter> COUNTERS = new MetricBuilder<Counter>() {
+    private final MetricBuilder<Counter> COUNTERS = new MetricBuilder<Counter>() {
         @Override
         public Counter newMetric() {
             return new Counter();
@@ -49,7 +65,7 @@ public class DefaultMetricBuilderFactory implements MetricBuilderFactory {
         }
     };
 
-    private static final MetricBuilder<Meter> METERS = new MetricBuilder<Meter>() {
+    private final MetricBuilder<Meter> METERS = new MetricBuilder<Meter>() {
         @Override
         public Meter newMetric() {
             return new Meter();

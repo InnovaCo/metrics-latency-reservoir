@@ -79,7 +79,7 @@ public class CustomMetricRegistry extends MetricRegistry {
         private MetricBuilder<Counter> countersBuilder;
 
         public Builder() {
-            fromFactory(new DefaultMetricBuilderFactory());
+            fromFactory(new TimeWindowMetricBuilderFactory());
         }
 
         public Builder timersBuilder(MetricBuilder<Timer> timersBuilder) {
