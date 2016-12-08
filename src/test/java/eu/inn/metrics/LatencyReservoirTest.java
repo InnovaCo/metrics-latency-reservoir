@@ -1,8 +1,11 @@
 package eu.inn.metrics;
 
+import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Snapshot;
 import eu.inn.metrics.hdr.HdrLatencyReservoir;
+import eu.inn.metrics.sed.SlidingExponentialDecayingReservoir;
 import org.LatencyUtils.LatencyStats;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -17,10 +20,8 @@ public class LatencyReservoirTest {
         assertEmpty(reservoir);
     }
 
-    @Test
-    public void nonEmptyReservoir_CollectAllMetricsFromTheFirstWindow() throws InterruptedException {
-        HdrLatencyReservoir reservoir = createReservoir(100);
-
+    @Test(dataProvider = "longReservoirs")
+    public void nonEmptyReservoir_CollectAllMetricsFromTheFirstWindow(Reservoir reservoir) throws InterruptedException {
         final int metricsCount = 100;
 
         track(reservoir, metricsCount);
@@ -30,9 +31,8 @@ public class LatencyReservoirTest {
         assertNonEmpty(reservoir, metricsCount);
     }
 
-    @Test
-    public void nonEmptyReservoir_BecomesEmptyAfterOldWindowsSlided() throws InterruptedException {
-        HdrLatencyReservoir reservoir = createReservoir(10);
+    @Test(dataProvider = "shortReservoirs")
+    public void nonEmptyReservoir_BecomesEmptyAfterOldWindowsSlided(Reservoir reservoir) throws InterruptedException {
         final int metricsCount = 100;
 
         track(reservoir, metricsCount);
@@ -42,9 +42,8 @@ public class LatencyReservoirTest {
         assertEmpty(reservoir);
     }
 
-    @Test
-    public void nonEmptyReservoir_BecomesOperationalAfterSliding() throws InterruptedException {
-        HdrLatencyReservoir reservoir = createReservoir(10);
+    @Test(dataProvider = "shortReservoirs")
+    public void nonEmptyReservoir_BecomesOperationalAfterSliding(Reservoir reservoir) throws InterruptedException {
         track(reservoir, 1000);
         Thread.sleep(150);
         assertEmpty(reservoir);
@@ -54,7 +53,24 @@ public class LatencyReservoirTest {
         assertNonEmpty(reservoir, 10);
     }
 
-    private HdrLatencyReservoir createReservoir(long flushInMillis) {
+    @DataProvider(name = "longReservoirs")
+    public static Object[][] longReservoirs() {
+        return reservoirs(100);
+    }
+
+    @DataProvider(name = "shortReservoirs")
+    public static Object[][] shortReservoirs() {
+        return reservoirs(10);
+    }
+
+    public static Object[][] reservoirs(long flushInMillis) {
+        return new Object[][] {
+                {createHdrReservoir(flushInMillis)},
+                {createTimeSlidingReservoir(flushInMillis)}
+        };
+    }
+
+    private static Reservoir createHdrReservoir(long flushInMillis) {
         LatencyStats stats = LatencyStats.Builder.create()
                 .lowestTrackableLatency(1)
                 .highestTrackableLatency(Long.MAX_VALUE)
@@ -67,13 +83,20 @@ public class LatencyReservoirTest {
                .build();
     }
 
-    private void track(HdrLatencyReservoir reservoir, int metricsCount) {
+    private static Reservoir createTimeSlidingReservoir(long flushInMillis) {
+        return SlidingExponentialDecayingReservoir.builder()
+                .flushEvery(flushInMillis, TimeUnit.MILLISECONDS)
+                .window(120, TimeUnit.MILLISECONDS)
+                .build();
+    }
+
+    private void track(Reservoir reservoir, int metricsCount) {
         for (long i = 1; i <= metricsCount; i++) {
             reservoir.update(i);
         }
     }
 
-    private void assertEmpty(HdrLatencyReservoir reservoir) {
+    private void assertEmpty(Reservoir reservoir) {
         Snapshot snapshot = reservoir.getSnapshot();
 
         assertEquals("Empty reservoir size should be 0", 0, reservoir.size());
@@ -82,7 +105,7 @@ public class LatencyReservoirTest {
         assertEquals("Empty snapshot max should be 0", 0, snapshot.getMax());
     }
 
-    private void assertNonEmpty(HdrLatencyReservoir reservoir, int max) {
+    private void assertNonEmpty(Reservoir reservoir, int max) {
         Snapshot snapshot = reservoir.getSnapshot();
 
         assertEquals("Unexpected reservoir size", max, reservoir.size());
